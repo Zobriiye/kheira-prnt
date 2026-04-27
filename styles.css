@@ -8,32 +8,8 @@ body {
     font-family: 'Courier New', Courier, monospace;
     font-size: 10px;
     background: #fff;
-}
-
-@media print {
-    body { 
-        margin: 0; 
-        padding: 0;
-        width: 58mm;
-    }
-    
-    @page {
-        size: 58mm auto;
-        margin: 0;
-    }
-    
-    html, body {
-        width: 58mm;
-    }
-    
-    .ticket {
-        width: 58mm;
-        max-width: 58mm;
-    }
-    
-    .hidden-print, .hidden-print * { 
-        display: none !important; 
-    }
+    width: 58mm;
+    margin: 0 auto;
 }
 
 .ticket {
@@ -145,6 +121,22 @@ tbody tr:last-child td {
 }
 
 @media print {
-    body { margin: 0; padding: 0; }
-    .hidden-print, .hidden-print * { display: none !important; }
+    @page {
+        size: 58mm auto;
+        margin: 0;
+    }
+    
+    html, body {
+        width: 58mm;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        margin: 0 auto;
+    }
+    
+    .hidden-print, .hidden-print * { 
+        display: none !important; 
+    }
 }
