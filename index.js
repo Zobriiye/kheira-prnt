@@ -79,12 +79,23 @@ const main = () => {
         if (tusd) tusd.innerHTML = totalusd;
     }
 
-    // Ticket width
+    // Ticket width - force 58mm if not specified
     const ticket = $("ticket");
-    if (pagewidth && ticket) {
-        ticket.style.width = pagewidth;
-        ticket.style.maxWidth = pagewidth;
+    const targetWidth = pagewidth || "58mm";
+    
+    if (ticket) {
+        ticket.style.width = targetWidth;
+        ticket.style.maxWidth = targetWidth;
+        ticket.style.minWidth = targetWidth;
     }
+    
+    // Force body and html width
+    document.body.style.width = targetWidth;
+    document.body.style.minWidth = targetWidth;
+    document.body.style.maxWidth = targetWidth;
+    document.documentElement.style.width = targetWidth;
+    document.documentElement.style.minWidth = targetWidth;
+    document.documentElement.style.maxWidth = targetWidth;
 
     // Rows
     const tbody = $("tableBod");
@@ -96,16 +107,96 @@ const main = () => {
             ${target !== "LBP" ? `<td class="price">${unitpriceusd}</td>` : ""}
         </tr>`;
     });
-// Add this right before window.print()
-const viewportMeta = document.querySelector('meta[name="viewport"]');
-if (viewportMeta) {
-    viewportMeta.content = 'width=58mm, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-}
 
-setTimeout(() => {
-    window.print();
-}, 300);
+    // Update viewport meta for print
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    if (viewportMeta) {
+        viewportMeta.setAttribute('content', 'width=58mm, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    }
     
+    // Add a style element to enforce width during print
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+        @media print {
+            @page { size: ${targetWidth} auto; margin: 0; }
+            html, body { width: ${targetWidth} !important; min-width: ${targetWidth} !important; max-width: ${targetWidth} !important; }
+        }
+    `;
+    document.head.appendChild(styleEl);
+
+    // Create iframe for printing to bypass browser scaling
+    setTimeout(() => {
+        const ticketContent = document.getElementById('ticket').outerHTML;
+        const styles = document.querySelector('style') ? document.querySelector('style').outerHTML : '';
+        const allStyles = document.querySelectorAll('style');
+        let allStylesContent = '';
+        allStyles.forEach(style => {
+            allStylesContent += style.outerHTML;
+        });
+        
+        // Get the linked stylesheet content
+        const linkedStyles = document.querySelector('link[rel="stylesheet"]');
+        let linkedStylesHref = '';
+        if (linkedStyles) {
+            linkedStylesHref = linkedStyles.href;
+        }
+        
+        const printWindow = window.open('', '_blank', 'width=250,height=800');
+        
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=58mm, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                <link rel="stylesheet" href="${linkedStylesHref}">
+                <style>
+                    @page { 
+                        size: ${targetWidth} auto; 
+                        margin: 0; 
+                    }
+                    
+                    html, body { 
+                        width: ${targetWidth} !important; 
+                        min-width: ${targetWidth} !important;
+                        max-width: ${targetWidth} !important;
+                        margin: 0 !important; 
+                        padding: 0 !important;
+                    }
+                    
+                    body {
+                        font-family: 'Courier New', Courier, monospace;
+                        font-size: 10px;
+                        background: #fff;
+                    }
+                    
+                    .ticket {
+                        width: ${targetWidth} !important;
+                        min-width: ${targetWidth} !important;
+                        max-width: ${targetWidth} !important;
+                        padding: 4px 6px 8px 6px;
+                    }
+                    
+                    ${allStylesContent}
+                </style>
+            </head>
+            <body>
+                ${ticketContent}
+            </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        printWindow.focus();
+        
+        // Wait for content to load then print
+        setTimeout(() => {
+            printWindow.print();
+            setTimeout(() => {
+                printWindow.close();
+            }, 500);
+        }, 500);
+    }, 300);
 };
 
 main();
