@@ -9,7 +9,6 @@ body {
     font-size: 10px;
     background: #fff;
     width: 58mm;
-    margin: 0 auto;
 }
 
 .ticket {
@@ -126,14 +125,28 @@ tbody tr:last-child td {
         margin: 0;
     }
     
-    html, body {
+    html {
         width: 58mm;
         margin: 0;
         padding: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
     
     body {
-        margin: 0 auto;
+        width: 58mm;
+        margin: 0;
+        padding: 0;
+        zoom: 100%;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .ticket {
+        width: 58mm;
+        max-width: 58mm;
+        transform: scale(1);
+        transform-origin: top left;
     }
     
     .hidden-print, .hidden-print * { 
