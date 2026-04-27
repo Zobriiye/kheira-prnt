@@ -1,11 +1,6 @@
 const main = () => {
-    const parameters = new URLSearchParams(window.location.search);
-    let params = {};
-    const cleanUpData = (key) => key.split(",").map((ind) => ind.trim());
-
-    for (var value of parameters.keys()) {
-        params[value] = parameters.get(value);
-    }
+    const params = Object.fromEntries(new URLSearchParams(window.location.search));
+    const split = (key) => (params[key] || "").split(",").map(s => s.trim());
 
     const {
         products, quantity, unitpricelbp, unitpriceusd,
@@ -15,119 +10,94 @@ const main = () => {
         amountPaid, amountPaidLbp, amountLeft, enablePots, enablePaidLeft
     } = params;
 
-    // Build product array
-    const prodArr = [];
-    cleanUpData(products).forEach((name) => prodArr.push({ name }));
-    const quantities = cleanUpData(quantity);
-    quantities.forEach((q, i) => (prodArr[i].quantity = q));
+    const quantities = split("quantity");
 
-    cleanUpData(unitpricelbp).forEach((price, i) => {
-        if (!splitSubTotal) {
-            prodArr[i].unitpricelbp = price;
-        } else {
-            const p = parseInt(price);
-            prodArr[i].unitpricelbp = p !== 0 ? p / parseInt(quantities[i]) : 0;
-        }
+    const prodArr = split("products").map((name, i) => {
+        const lbpRaw = split("unitpricelbp")[i];
+        const usdRaw = split("unitpriceusd")[i];
+        return {
+            name,
+            quantity: quantities[i],
+            unitpricelbp: splitSubTotal && parseInt(lbpRaw) ? (parseInt(lbpRaw) / parseInt(quantities[i])) : lbpRaw,
+            unitpriceusd: splitSubTotal && parseFloat(usdRaw) ? (parseFloat(usdRaw) / parseInt(quantities[i])) : usdRaw,
+        };
     });
 
-    cleanUpData(unitpriceusd).forEach((price, i) => {
-        if (!splitSubTotal) {
-            prodArr[i].unitpriceusd = price;
-        } else {
-            const p = parseFloat(price);
-            prodArr[i].unitpriceusd = p !== 0 ? p / parseInt(quantities[i]) : 0;
-        }
-    });
+    const $ = (id) => document.getElementById(id);
 
-    // DOM refs
-    const lbpColumn       = document.querySelector("#lbpColumn");
-    const usdColumn       = document.querySelector("#usdColumn");
-    const lbpTotalRow     = document.querySelector("#lbpTotalRow");
-    const usdTotalRow     = document.querySelector("#usdTotalRow");
-    const customerPart    = document.querySelector("#customer");
-    const potsLargePart   = document.querySelector("#potsRemainingLarge");
-    const potsMediumPart  = document.querySelector("#potsRemainingMedium");
-    const totalpricelbp   = document.querySelector("#totalpricelbp");
-    const totalpriceusd   = document.querySelector("#totalpriceusd");
-    const amountPaidPart  = document.querySelector("#amountPaid");
-    const amountPaidLbpPt = document.querySelector("#amountPaidLbp");
-    const amountLeftPart  = document.querySelector("#amountLeft");
-    const potsSection     = document.querySelector("#potsSection");
-    const paidLeftSection = document.querySelector("#paidLeftSection");
-    const datePart        = document.querySelector("#date");
+    // Company
+    const cn = $("companyName");
+    cn ? cn.innerHTML = companyName ? `${companyName} — INV# ${transId}` : "" : null;
+    if (!companyName && cn) cn.remove();
 
-    // Pots
-    if (potsLargePart)  potsLargePart.innerHTML  = (potsRemainingLarge  || 0) + ' L';
-    if (potsMediumPart) potsMediumPart.innerHTML  = (potsRemainingMedium || 0) + ' M';
-    if (!enablePots && potsSection) potsSection.remove();
+    // Customer
+    const cu = $("customer");
+    if (cu) cu.innerHTML = [customer, location].filter(Boolean).join(" · ");
 
-    // Paid / Left
-    if (amountPaidPart)  amountPaidPart.innerHTML  = amountPaid    || 0;
-    if (amountPaidLbpPt) amountPaidLbpPt.innerHTML = amountPaidLbp || 0;
-    if (amountLeftPart)  amountLeftPart.innerHTML  = amountLeft    || 0;
-    if (!enablePaidLeft && paidLeftSection) paidLeftSection.remove();
-
-    // Currency columns
-    switch (target) {
-        case "LBP":
-            if (usdColumn)   usdColumn.remove();
-            if (usdTotalRow) usdTotalRow.remove();
-            if (totalpricelbp) totalpricelbp.innerHTML = totalLbp;
-            break;
-        case "USD":
-            if (lbpColumn)   lbpColumn.remove();
-            if (lbpTotalRow) lbpTotalRow.remove();
-            if (totalpriceusd) totalpriceusd.innerHTML = totalusd;
-            break;
-        default:
-            if (totalpriceusd) totalpriceusd.innerHTML = totalusd;
-            if (totalpricelbp) totalpricelbp.innerHTML = totalLbp;
-            break;
-    }
-
-    // Company name
-    const companyNamePart = document.querySelector("#companyName");
-    if (!companyName) {
-        if (companyNamePart) companyNamePart.remove();
-    } else {
-        companyNamePart.innerHTML = companyName + " (INV# " + transId + ")";
-    }
+    // Date (hidden but safe)
+    const dp = $("date");
+    if (dp) dp.innerHTML = date || "";
 
     // Phone
-    const phoneNumberPart = document.querySelector("#phoneNumber");
-    if (!phoneNumber) {
-        if (phoneNumberPart) phoneNumberPart.remove();
-    } else {
-        phoneNumberPart.innerHTML = phoneNumber;
+    const ph = $("phoneNumber");
+    if (ph) { phoneNumber ? ph.innerHTML = phoneNumber : ph.remove(); }
+
+    // Pots
+    const ps = $("potsSection");
+    if (!enablePots && ps) { ps.remove(); }
+    else {
+        const pl = $("potsRemainingLarge");
+        const pm = $("potsRemainingMedium");
+        if (pl) pl.innerHTML = (potsRemainingLarge || 0) + "L";
+        if (pm) pm.innerHTML = (potsRemainingMedium || 0) + "M";
     }
 
-    // Customer & date (safe null checks)
-    if (customerPart) customerPart.innerHTML = customer + ", " + location;
-    if (datePart) datePart.innerHTML = date;
+    // Paid/Left
+    const pls = $("paidLeftSection");
+    if (!enablePaidLeft && pls) { pls.remove(); }
+    else {
+        const ap = $("amountPaid");    if (ap) ap.innerHTML = amountPaid || 0;
+        const al = $("amountPaidLbp"); if (al) al.innerHTML = amountPaidLbp || 0;
+        const alf = $("amountLeft");   if (alf) alf.innerHTML = amountLeft || 0;
+    }
+
+    // Totals & columns
+    const lbpCol = $("lbpColumn"), usdCol = $("usdColumn");
+    const lbpRow = $("lbpTotalRow"), usdRow = $("usdTotalRow");
+    const tlbp = $("totalpricelbp"), tusd = $("totalpriceusd");
+
+    if (target === "LBP") {
+        if (usdCol) usdCol.remove();
+        if (usdRow) usdRow.remove();
+        if (tlbp) tlbp.innerHTML = totalLbp;
+    } else if (target === "USD") {
+        if (lbpCol) lbpCol.remove();
+        if (lbpRow) lbpRow.remove();
+        if (tusd) tusd.innerHTML = totalusd;
+    } else {
+        if (tlbp) tlbp.innerHTML = totalLbp;
+        if (tusd) tusd.innerHTML = totalusd;
+    }
 
     // Ticket width
-    const ticket = document.querySelector("#ticket");
-    if (pagewidth) {
+    const ticket = $("ticket");
+    if (pagewidth && ticket) {
+        ticket.style.width = pagewidth;
         ticket.style.maxWidth = pagewidth;
-        ticket.style.width    = pagewidth;
     }
 
     // Rows
-    const tableBody = document.querySelector("#tableBod");
-    prodArr.forEach((product) => {
-        tableBody.innerHTML += `
-        <tr>
-            <td class="quantity">${product.quantity}</td>
-            <td class="description">${product.name}</td>
-            ${!target || target !== "USD" ? `<td class="price">${product.unitpricelbp}</td>` : ""}
-            ${!target || target !== "LBP" ? `<td class="price">${product.unitpriceusd}</td>` : ""}
+    const tbody = $("tableBod");
+    prodArr.forEach(({ quantity, name, unitpricelbp, unitpriceusd }) => {
+        tbody.innerHTML += `<tr>
+            <td class="qty">${quantity}</td>
+            <td class="desc">${name}</td>
+            ${target !== "USD" ? `<td class="price">${unitpricelbp}</td>` : ""}
+            ${target !== "LBP" ? `<td class="price">${unitpriceusd}</td>` : ""}
         </tr>`;
     });
 
-    // Wait for Cairo font to load then print → rawbt intercepts the print dialog
-    document.fonts.ready.then(() => {
-        window.print();
-    });
+    window.print();
 };
 
 main();
