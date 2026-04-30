@@ -123,13 +123,14 @@ const main = () => {
     const tableBody = document.querySelector("#tableBod");
 
     prodArr.forEach((product) => {
-        tableBody.innerHTML += `
-<tr>
-<td class="quantity">${product.quantity}</td>
-<td class="description">${product.name}</td>
-${target === "LBP" ? `<td class="price">${product.unitpricelbp}</td>` : ""}
-${(!target || target === "USD") ? `<td class="price">${product.unitpriceusd}</td>` : ""}
-</tr>`;
+        let lbpCell = target === "LBP" ? '<td class="price">' + product.unitpricelbp + '</td>' : '';
+        let usdCell = (!target || target === "USD") ? '<td class="price">' + product.unitpriceusd + '</td>' : '';
+        tableBody.innerHTML += '<tr>' +
+            '<td class="quantity">' + product.quantity + '</td>' +
+            '<td class="description">' + product.name + '</td>' +
+            lbpCell +
+            usdCell +
+            '</tr>';
     });
 
 
