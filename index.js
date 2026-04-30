@@ -1,3 +1,4 @@
+
 const main = () => {
     window.jsPDF = window.jspdf.jsPDF
     const parameters = new URLSearchParams(window.location.search);
@@ -91,12 +92,9 @@ const main = () => {
             totalpricelbpPart.innerHTML = totalLbp;
             break;
         case "USD":
-            // Remove LBP unit price column header (keeps only USD unit prices)
             lbpColumn.remove()
-            // Keep LBP total row as requested - do NOT remove lbpTotalRow
-            // Populate both USD and LBP totals
-            totalpriceusdPart.innerHTML = totalusd || "0";
-            totalpricelbpPart.innerHTML = totalLbp || "0";
+            totalpriceusdPart.innerHTML = totalusd;
+            totalpricelbpPart.innerHTML = totalLbp;
             break;
         default:
             totalpriceusdPart.innerHTML = totalusd;
@@ -129,8 +127,8 @@ const main = () => {
 <tr>
 <td class="quantity">${product.quantity}</td>
 <td class="description">${product.name}</td>
-${!target || target === "LBP" ? `<td class="price">${product.unitpricelbp}</td>` : ""}
-${!target || target === "USD" ? `<td class="price">${product.unitpriceusd}</td>` : ""}
+${target === "LBP" ? `<td class="price">${product.unitpricelbp}</td>` : ""}
+${(!target || target === "USD") ? `<td class="price">${product.unitpriceusd}</td>` : ""}
 </tr>`;
     });
 
@@ -152,3 +150,4 @@ ${!target || target === "USD" ? `<td class="price">${product.unitpriceusd}</td>`
 
 };
 main();
+
