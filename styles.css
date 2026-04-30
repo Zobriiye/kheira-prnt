@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 14px;
+    font-size: 13px;
     background: #fff;
     color: #000;
 }
@@ -18,7 +18,7 @@ body {
 }
 
 #companyName {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     text-align: center;
     letter-spacing: 0.5px;
@@ -27,7 +27,7 @@ body {
 }
 
 #customer {
-    font-size: 13px;
+    font-size: 12px;
     text-align: center;
     margin-bottom: 4px;
 }
